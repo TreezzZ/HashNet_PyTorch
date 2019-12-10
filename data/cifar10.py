@@ -27,7 +27,7 @@ def load_data(root, num_query, num_train, batch_size, num_workers):
     """
     CIFAR10.init(root, num_query, num_train)
     query_dataset = CIFAR10('query', transform=query_transform(), target_transform=Onehot())
-    train_dataset = CIFAR10('train', transform=train_transform(), target_transform=None)
+    train_dataset = CIFAR10('train', transform=train_transform(), target_transform=Onehot())
     retrieval_dataset = CIFAR10('database', transform=query_transform(), target_transform=Onehot())
 
     query_dataloader = DataLoader(
@@ -50,7 +50,7 @@ def load_data(root, num_query, num_train, batch_size, num_workers):
         num_workers=num_workers,
     )
 
-    return query_dataloader, train_dataloader, retrieval_dataloader
+    return train_dataloader, query_dataloader, retrieval_dataloader
 
 
 class CIFAR10(Dataset):

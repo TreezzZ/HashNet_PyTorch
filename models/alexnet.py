@@ -5,18 +5,17 @@ import math
 from torch.hub import load_state_dict_from_url
 
 
-def load_model(code_length, beta):
+def load_model(code_length):
     """
     Load CNN model.
 
     Args
         code_length(int): Hashing code length.
-        beta(float): Hyper-parameter.
 
     Returns
         model(torch.nn.Module): CNN model.
     """
-    model = AlexNet(code_length, beta)
+    model = AlexNet(code_length)
     state_dict = load_state_dict_from_url('https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth')
     model.load_state_dict(state_dict, strict=False)
 
@@ -63,8 +62,8 @@ class AlexNet(nn.Module):
         self.hash_layer = nn.Linear(4096, code_length)
 
     def forward(self, x):
-        if self.training:
-            self.it += 1
+        #if self.training:
+        #    self.it += 1
         x = self.features(x)
         x = self.avgpool(x)
         x = x.view(x.size(0), 256 * 6 * 6)
@@ -72,8 +71,9 @@ class AlexNet(nn.Module):
         x = self.hash_layer(x)
 
         # Scale beta
-        if self.it % self.step_size == self.step_size - 1:
-            self.beta *= math.pow(1 + self.gamma * self.it, self.power)
-        x = torch.tanh(self.beta * x)
+        #if self.it % self.step_size == self.step_size - 1:
+        #    self.beta *= math.pow(1 + self.gamma * self.it, self.power)
+        #x = torch.tanh(self.beta * x)
+        x = torch.tanh(x)
 
         return x

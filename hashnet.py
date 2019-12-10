@@ -64,6 +64,7 @@ def train(
     # Training
     for it in range(max_iter):
         tic = time.time()
+        model.training = True
         for data, targets, index in train_dataloader:
             data, targets, index = data.to(device), targets.to(device), index.to(device)
             optimizer.zero_grad()
@@ -80,7 +81,8 @@ def train(
         training_time += time.time() - tic
 
         # Evaluate
-        if it % evaluate_iterval == evaluate_interval - 1:
+        if it % evaluate_interval == evaluate_interval - 1:
+            model.training = False
             # Generate hash code
             query_code = generate_code(model, query_dataloader, code_length, device)
             retrieval_code = generate_code(model, retrieval_dataloader, code_length, device)
@@ -113,7 +115,7 @@ def train(
                 best_map = mAP
 
                 checkpoint = {
-                    'model': model.cpu().state_dict(),
+                    'model': model.state_dict(),
                     'qB': query_code.cpu(),
                     'rB': retrieval_code.cpu(),
                     'qL': query_targets.cpu(),
@@ -162,8 +164,8 @@ class HashNetLoss(nn.Module):
 
     def forward(self, H, S):
         # Compute balance weights
-        w1 = S.sum() / (S == 1).sum()
-        w0 = S.sum() / (S == 0).sum()
+        w1 = S.numel() / (S == 1).sum().float()
+        w0 = S.numel() / (S == 0).sum().float()
         W = torch.zeros(S.shape, device=H.device)
         W[S == 1] = w1
         W[S == 0] = w0
