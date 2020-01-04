@@ -27,6 +27,7 @@ class VGG(nn.Module):
 
     def __init__(self, features, code_length):
         super(VGG, self).__init__()
+
         self.features = features
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
         self.classifier = nn.Sequential(
@@ -40,10 +41,7 @@ class VGG(nn.Module):
         )
         self.classifier = self.classifier[:-1]
 
-        self.hash_layer = nn.Sequential(
-            nn.Linear(4096, code_length),
-            nn.Tanh(),
-        )
+        self.hash_layer = nn.Linear(4096, code_length),
 
     def forward(self, x):
         x = self.features(x)
@@ -51,6 +49,9 @@ class VGG(nn.Module):
         x = torch.flatten(x, 1)
         x = self.classifier(x)
         x = self.hash_layer(x)
+
+        x = torch.tanh(x)
+
         return x
 
 

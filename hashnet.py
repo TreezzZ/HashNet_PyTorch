@@ -44,7 +44,7 @@ def train(
     
     # Create criterion, optimizer, scheduler
     criterion = HashNetLoss(alpha)
-    optimizer = optim.Adam(
+    optimizer = optim.RMSprop(
         model.parameters(),
         lr=lr,
         weight_decay=5e-4,
@@ -61,9 +61,11 @@ def train(
     training_time = 0.
 
     # Training
+    # In this implementation, I do not use "scaled tanh".
+    # It is useless and hard to tune parameters, sometimes it may decrease performance.
+    # Refer to https://github.com/thuml/HashNet/issues/29
     for it in range(max_iter):
         tic = time.time()
-        model.training = True
         for data, targets, index in train_dataloader:
             data, targets, index = data.to(device), targets.to(device), index.to(device)
             optimizer.zero_grad()
@@ -81,7 +83,6 @@ def train(
 
         # Evaluate
         if it % evaluate_interval == evaluate_interval - 1:
-            model.training = False
             # Generate hash code
             query_code = generate_code(model, query_dataloader, code_length, device)
             retrieval_code = generate_code(model, retrieval_dataloader, code_length, device)
@@ -174,8 +175,9 @@ class HashNetLoss(nn.Module):
         # Inner product
         theta = H @ H.t()
 
-        loss = (W * (torch.log(1 + torch.exp(self.alpha * theta)) - self.alpha * S * theta)).mean()
-        #loss = (torch.log(1 + torch.exp(self.alpha * theta) - self.alpha * S * theta)).mean()
+        # log(1+e^z) may be overflow when z is large.
+        # We convert log(1+e^z) to log(1 + e^(-z)) + z.
+        loss = (W * (torch.log(1 + torch.exp(-(self.alpha * theta).abs())) + theta.clamp(min=0) - self.alpha * S * theta)).mean()
 
         return loss
 

@@ -26,11 +26,6 @@ class AlexNet(nn.Module):
 
     def __init__(self, code_length):
         super(AlexNet, self).__init__()
-        self.step_size = 200
-        self.it = 0
-        self.beta = 1
-        self.gamma = 5e-3
-        self.power = 0.5
 
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
@@ -62,18 +57,12 @@ class AlexNet(nn.Module):
         self.hash_layer = nn.Linear(4096, code_length)
 
     def forward(self, x):
-        #if self.training:
-        #    self.it += 1
         x = self.features(x)
         x = self.avgpool(x)
         x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
         x = self.hash_layer(x)
 
-        # Scale beta
-        #if self.it % self.step_size == self.step_size - 1:
-        #    self.beta *= math.pow(1 + self.gamma * self.it, self.power)
-        #x = torch.tanh(self.beta * x)
         x = torch.tanh(x)
 
         return x

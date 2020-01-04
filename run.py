@@ -12,12 +12,11 @@ from data.data_loader import load_data
 def run():
     # Load config
     args = load_config()
-    logger.add('logs/{}_model_{}_code_{}_alpha_{}_topk_{}.log'.format(
+    logger.add('logs/{}_model_{}_code_{}_alpha_{}.log'.format(
             args.dataset,
             args.arch,
             args.code_length,
             args.alpha,
-            args.topk,
         ), 
         rotation='500 MB', 
         level='INFO',
@@ -40,36 +39,34 @@ def run():
     )
 
     # Training
-    #for alpha in [i * 0.01 for i in range(1, 10)] + [i * 0.1 for i in range(1, 10)]:
-    #    args.alpha = alpha
-    checkpoint = hashnet.train(
-        train_dataloader,
-        query_dataloader,
-        retrieval_dataloader,
-        args.arch,
-        args.code_length,
-        args.device,
-        args.lr,
-        args.max_iter,
-        args.alpha,
-        args.topk,
-        args.evaluate_interval,
-    )
-    logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
-        #logger.info('[alpha:{}][map:{:.4f}]'.format(alpha, checkpoint['map']))
+    for code_length in [16, 32, 48, 128]:
+        args.code_length  = code_length
+        checkpoint = hashnet.train(
+            train_dataloader,
+            query_dataloader,
+            retrieval_dataloader,
+            args.arch,
+            args.code_length,
+            args.device,
+            args.lr,
+            args.max_iter,
+            args.alpha,
+            args.topk,
+            args.evaluate_interval,
+        )
+        logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
 
-    # Save checkpoint
-    #torch.save(
-    #    checkpoint, 
-    #    os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_topk_{}_map_{:.4f}.pt'.format(
-    #        args.dataset, 
-    #        args.arch, 
-    #        args.code_length, 
-    #        args.alpha, 
-    #        args.topk, 
-    #        checkpoint['map']),
-    #    )
-    #)
+        # Save checkpoint
+        torch.save(
+            checkpoint, 
+            os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_map_{:.4f}.pt'.format(
+                args.dataset, 
+                args.arch, 
+                args.code_length, 
+                args.alpha, 
+                checkpoint['map']),
+            )
+        )
 
 
 def load_config():
@@ -93,18 +90,18 @@ def load_config():
                         help='CNN model name.(default: alexnet)')
     parser.add_argument('--batch-size', default=256, type=int,
                         help='Batch size.(default: 256)')
-    parser.add_argument('--lr', default=1e-3, type=float,
-                        help='Learning rate.(default: 1e-3)')
-    parser.add_argument('--max-iter', default=150, type=int,
-                        help='Number of iterations.(default: 150)')
+    parser.add_argument('--lr', default=1e-5, type=float,
+                        help='Learning rate.(default: 1e-5)')
+    parser.add_argument('--max-iter', default=100, type=int,
+                        help='Number of iterations.(default: 100)')
     parser.add_argument('--num-workers', default=6, type=int,
                         help='Number of loading data threads.(default: 6)')
     parser.add_argument('--topk', default=-1, type=int,
                         help='Calculate map of top k.(default: all)')
     parser.add_argument('--gpu', default=None, type=int,
                         help='Using gpu.(default: False)')
-    parser.add_argument('--alpha', default=0.1, type=float,
-                        help='Hyper-parameter.(default: 0.1)')
+    parser.add_argument('--alpha', default=1, type=float,
+                        help='Hyper-parameter.(default: 1)')
     parser.add_argument('--seed', default=3367, type=int,
                         help='Random seed.(default: 3367)')
     parser.add_argument('--evaluate-interval', default=10, type=int,
