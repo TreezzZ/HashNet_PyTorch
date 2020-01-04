@@ -39,7 +39,8 @@ def run():
     )
 
     # Training
-    for code_length in [16, 32, 48, 128]:
+    #for code_length in [16, 32, 48, 128]:
+    for code_length in [16]:
         args.code_length  = code_length
         checkpoint = hashnet.train(
             train_dataloader,
@@ -57,16 +58,16 @@ def run():
         logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
 
         # Save checkpoint
-        torch.save(
-            checkpoint, 
-            os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_map_{:.4f}.pt'.format(
-                args.dataset, 
-                args.arch, 
-                args.code_length, 
-                args.alpha, 
-                checkpoint['map']),
-            )
-        )
+        #torch.save(
+        #    checkpoint, 
+        #    os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_map_{:.4f}.pt'.format(
+        #        args.dataset, 
+        #        args.arch, 
+        #        args.code_length, 
+        #        args.alpha, 
+        #        checkpoint['map']),
+        #    )
+        #)
 
 
 def load_config():
