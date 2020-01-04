@@ -44,10 +44,9 @@ def train(
     
     # Create criterion, optimizer, scheduler
     criterion = HashNetLoss(alpha)
-    optimizer = optim.SGD(
+    optimizer = optim.Adam(
         model.parameters(),
         lr=lr,
-        momentum=0.9,
         weight_decay=5e-4,
     )
     scheduler = CosineAnnealingLR(
@@ -164,16 +163,19 @@ class HashNetLoss(nn.Module):
 
     def forward(self, H, S):
         # Compute balance weights
-        w1 = S.numel() / (S == 1).sum().float()
-        w0 = S.numel() / (S == 0).sum().float()
+        sim_pos = (S == 1)
+        dissim_pos = (S == 0)
+        w1 = S.numel() / sim_pos.sum().float()
+        w0 = S.numel() / dissim_pos.sum().float()
         W = torch.zeros(S.shape, device=H.device)
-        W[S == 1] = w1
-        W[S == 0] = w0
+        W[sim_pos] = w1
+        W[dissim_pos] = w0
 
         # Inner product
         theta = H @ H.t()
 
-        loss = (W * torch.log(1 + torch.exp(self.alpha * theta) - self.alpha * S * theta)).mean()
+        loss = (W * (torch.log(1 + torch.exp(self.alpha * theta)) - self.alpha * S * theta)).mean()
+        #loss = (torch.log(1 + torch.exp(self.alpha * theta) - self.alpha * S * theta)).mean()
 
         return loss
 

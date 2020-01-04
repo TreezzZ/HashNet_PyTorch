@@ -1,6 +1,6 @@
-import numpy as np
 import torch
 import torchvision.transforms as transforms
+import numpy as np
 
 
 def encode_onehot(labels, num_classes=10):

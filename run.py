@@ -12,12 +12,10 @@ from data.data_loader import load_data
 def run():
     # Load config
     args = load_config()
-    logger.add('logs/{}_model_{}_code_{}_train_{}_query_{}_alpha_{}_topk_{}.log'.format(
+    logger.add('logs/{}_model_{}_code_{}_alpha_{}_topk_{}.log'.format(
             args.dataset,
             args.arch,
             args.code_length,
-            args.num_train,
-            args.num_query,
             args.alpha,
             args.topk,
         ), 
@@ -37,13 +35,13 @@ def run():
     train_dataloader, query_dataloader, retrieval_dataloader = load_data(
         args.dataset,
         args.root,
-        args.num_query,
-        args.num_train,
         args.batch_size,
         args.num_workers,
     )
 
     # Training
+    #for alpha in [i * 0.01 for i in range(1, 10)] + [i * 0.1 for i in range(1, 10)]:
+    #    args.alpha = alpha
     checkpoint = hashnet.train(
         train_dataloader,
         query_dataloader,
@@ -57,22 +55,21 @@ def run():
         args.topk,
         args.evaluate_interval,
     )
+    logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
+        #logger.info('[alpha:{}][map:{:.4f}]'.format(alpha, checkpoint['map']))
 
     # Save checkpoint
-    torch.save(
-        checkpoint, 
-        os.path.join('checkpoints', '{}_model_{}_code_{}_train_{}_query_{}_alpha_{}_topk_{}_map_{:.4f}.pt'.format(
-            args.dataset, 
-            args.arch, 
-            args.code_length, 
-            args.num_train,
-            args.num_query,
-            args.alpha, 
-            args.topk, 
-            checkpoint['map']),
-        )
-    )
-    logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
+    #torch.save(
+    #    checkpoint, 
+    #    os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_topk_{}_map_{:.4f}.pt'.format(
+    #        args.dataset, 
+    #        args.arch, 
+    #        args.code_length, 
+    #        args.alpha, 
+    #        args.topk, 
+    #        checkpoint['map']),
+    #    )
+    #)
 
 
 def load_config():
@@ -100,18 +97,14 @@ def load_config():
                         help='Learning rate.(default: 1e-3)')
     parser.add_argument('--max-iter', default=150, type=int,
                         help='Number of iterations.(default: 150)')
-    parser.add_argument('--num-query', default=1000, type=int,
-                        help='Number of query data points.(default: 1000)')
-    parser.add_argument('--num-train', default=5000, type=int,
-                        help='Number of query data points.(default: 5000)')
     parser.add_argument('--num-workers', default=6, type=int,
                         help='Number of loading data threads.(default: 6)')
     parser.add_argument('--topk', default=-1, type=int,
                         help='Calculate map of top k.(default: all)')
     parser.add_argument('--gpu', default=None, type=int,
                         help='Using gpu.(default: False)')
-    parser.add_argument('--alpha', default=1, type=float,
-                        help='Hyper-parameter.(default: 1)')
+    parser.add_argument('--alpha', default=0.1, type=float,
+                        help='Hyper-parameter.(default: 0.1)')
     parser.add_argument('--seed', default=3367, type=int,
                         help='Random seed.(default: 3367)')
     parser.add_argument('--evaluate-interval', default=10, type=int,
@@ -130,3 +123,4 @@ def load_config():
 
 if __name__ == '__main__':
     run()
+

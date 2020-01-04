@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torchvision.transforms as transforms
 
@@ -13,15 +14,13 @@ def load_data(root, batch_size, workers):
     """
     Load imagenet dataset
 
-    Args:
+    Args
         root (str): Path of imagenet dataset.
         batch_size (int): Number of samples in one batch.
         workers (int): Number of data loading threads.
 
-    Returns:
-        train_dataloader (torch.utils.data.dataloader.DataLoader): Training dataset loader.
-        query_dataloader (torch.utils.data.dataloader.DataLoader): Query dataset loader.
-        retrieval_dataloader (torch.utils.data.dataloader.DataLoader): Validation dataset loader.
+    Returns
+        train_dataloader, query_dataloader, retrieval_dataloader(torch.utils.data.dataloader.DataLoader): Data loader.    
     """
     # Data transform
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -32,7 +31,7 @@ def load_data(root, batch_size, workers):
             transforms.ToTensor(),
             normalize,
         ])
-    test_transform = transforms.Compose([
+    query_transform = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
@@ -42,12 +41,12 @@ def load_data(root, batch_size, workers):
     # Construct data loader
     train_dir = os.path.join(root, 'train')
     query_dir = os.path.join(root, 'query')
-    retrieval_dir = os.path.join(root, 'database')
+    database_dir = os.path.join(root, 'database')
 
     train_dataset = ImagenetDataset(
         train_dir,
         transform=train_transform,
-        target_transform=Onehot(100),
+        targets_transform=Onehot(100),
     )
 
     train_dataloader = DataLoader(
@@ -60,43 +59,41 @@ def load_data(root, batch_size, workers):
 
     query_dataset = ImagenetDataset(
         query_dir,
-        transform=test_transform,
-        target_transform=Onehot(100),
+        transform=query_transform,
+        targets_transform=Onehot(100),
     )
 
     query_dataloader = DataLoader(
         query_dataset,
         batch_size=batch_size,
-        shuffle=False,
         num_workers=workers,
         pin_memory=True,
     )
 
-    retrieval_dataset = ImagenetDataset(
-        retrieval_dir,
-        transform=test_transform,
-        target_transform=Onehot(100),
+    database_dataset = ImagenetDataset(
+        database_dir,
+        transform=query_transform,
+        targets_transform=Onehot(100),
     )
 
-    retrieval_dataloader = DataLoader(
-        retrieval_dataset,
+    database_dataloader = DataLoader(
+        database_dataset,
         batch_size=batch_size,
-        shuffle=False,
         num_workers=workers,
         pin_memory=True,
     )
 
-    return train_dataloader, query_dataloader, retrieval_dataloader
+    return train_dataloader, query_dataloader, database_dataloader
 
 
 class ImagenetDataset(Dataset):
     classes = None
     class_to_idx = None
 
-    def __init__(self, root, transform=None, target_transform=None):
+    def __init__(self, root, transform=None, targets_transform=None):
         self.root = root
         self.transform = transform
-        self.target_transform = target_transform
+        self.targets_transform = targets_transform
         self.imgs = []
         self.targets = []
 
@@ -110,8 +107,12 @@ class ImagenetDataset(Dataset):
             files = [os.path.join(cur_class, i) for i in files]
             self.imgs.extend(files)
             self.targets.extend([ImagenetDataset.class_to_idx[cl] for i in range(len(files))])
-        self.targets = torch.tensor(self.targets)
+        self.targets = np.asarray(self.targets)
         self.onehot_targets = torch.from_numpy(encode_onehot(self.targets, 100)).float()
+        self.data = self.imgs
+    
+    def get_onehot_targets(self):
+        return self.onehot_targets
 
     def __len__(self):
         return len(self.imgs)
@@ -123,10 +124,8 @@ class ImagenetDataset(Dataset):
 
         if self.transform is not None:
             img = self.transform(img)
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
+        if self.targets_transform is not None:
+            target = self.targets_transform(target)
         return img, target, item
 
     def _find_classes(self, dir):
@@ -146,10 +145,4 @@ class ImagenetDataset(Dataset):
         classes.sort()
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
-
-    def get_onehot_targets(self):
-        """
-        Return one-hot encoding targets.
-        """
-        return self.onehot_targets
 
