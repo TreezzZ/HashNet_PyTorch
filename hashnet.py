@@ -5,7 +5,7 @@ import torch.optim as optim
 
 from models.model_loader import load_model
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from utils.evaluate import mean_average_precision
+from utils.evaluate import mean_average_precision, pr_curve
 from loguru import logger
 
 
@@ -99,6 +99,15 @@ def train(
                 device,
                 topk,
             )
+
+            # Compute pr curve
+            P, R = pr_curve(
+                query_code.to(device),
+                retrieval_code.to(device),
+                query_targets.to(device),
+                retrieval_targets.to(device),
+                device,
+            )
             
             # Log
             logger.info('[iter:{}/{}][loss:{:.2f}][map:{:.4f}][time:{:.2f}]'.format(
@@ -120,6 +129,8 @@ def train(
                     'rB': retrieval_code.cpu(),
                     'qL': query_targets.cpu(),
                     'rL': retrieval_targets.cpu(),
+                    'P': P,
+                    'R': R,
                     'map': best_map,
                 }
 

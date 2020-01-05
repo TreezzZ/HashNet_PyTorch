@@ -39,35 +39,32 @@ def run():
     )
 
     # Training
-    #for code_length in [16, 32, 48, 128]:
-    for code_length in [16]:
-        args.code_length  = code_length
-        checkpoint = hashnet.train(
-            train_dataloader,
-            query_dataloader,
-            retrieval_dataloader,
-            args.arch,
-            args.code_length,
-            args.device,
-            args.lr,
-            args.max_iter,
-            args.alpha,
-            args.topk,
-            args.evaluate_interval,
-        )
-        logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
+    checkpoint = hashnet.train(
+        train_dataloader,
+        query_dataloader,
+        retrieval_dataloader,
+        args.arch,
+        args.code_length,
+        args.device,
+        args.lr,
+        args.max_iter,
+        args.alpha,
+        args.topk,
+        args.evaluate_interval,
+    )
+    logger.info('[code_length:{}][map:{:.4f}]'.format(args.code_length, checkpoint['map']))
 
-        # Save checkpoint
-        #torch.save(
-        #    checkpoint, 
-        #    os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_map_{:.4f}.pt'.format(
-        #        args.dataset, 
-        #        args.arch, 
-        #        args.code_length, 
-        #        args.alpha, 
-        #        checkpoint['map']),
-        #    )
-        #)
+    # Save checkpoint
+    torch.save(
+        checkpoint, 
+        os.path.join('checkpoints', '{}_model_{}_code_{}_alpha_{}_map_{:.4f}.pt'.format(
+            args.dataset, 
+            args.arch, 
+            args.code_length, 
+            args.alpha, 
+            checkpoint['map']),
+        )
+    )
 
 
 def load_config():
@@ -93,8 +90,8 @@ def load_config():
                         help='Batch size.(default: 256)')
     parser.add_argument('--lr', default=1e-5, type=float,
                         help='Learning rate.(default: 1e-5)')
-    parser.add_argument('--max-iter', default=100, type=int,
-                        help='Number of iterations.(default: 100)')
+    parser.add_argument('--max-iter', default=300, type=int,
+                        help='Number of iterations.(default: 300)')
     parser.add_argument('--num-workers', default=6, type=int,
                         help='Number of loading data threads.(default: 6)')
     parser.add_argument('--topk', default=-1, type=int,

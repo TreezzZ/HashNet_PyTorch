@@ -32,7 +32,7 @@ optional arguments:
   --batch-size BATCH_SIZE
                         Batch size.(default: 256)
   --lr LR               Learning rate.(default: 1e-5)
-  --max-iter MAX_ITER   Number of iterations.(default: 100)
+  --max-iter MAX_ITER   Number of iterations.(default: 300)
   --num-workers NUM_WORKERS
                         Number of loading data threads.(default: 6)
   --topk TOPK           Calculate map of top k.(default: all)
@@ -54,7 +54,7 @@ imagenet100: Top 100 classes, 5000 query images, 10000 training images, MAP@1000
 
  bits | 16 | 32 | 48 | 128
    :-:   |  :-:    |   :-:   |   :-:   |   :-:   
-cifar10@ALL | 
-nus-wide-tc21@5000 | 
-imagenet100@1000 | 
+cifar10@ALL | 0.7290 | 0.7528 | 0.7512 | 0.7579 
+nus-wide-tc21@5000 | 0.7981 | 0.8200 | 0.8300 | 0.8424 
+imagenet100@1000 | 0.3651 | 0.4629 | 0.5094 | 0.5787
 
